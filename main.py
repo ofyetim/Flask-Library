@@ -36,6 +36,17 @@ class  Users(db.Model):
     phone_number = db.Column(db.String(), nullable=False)
     activate = db.Column(db.Boolean(), nullable=False)
 
+"""#BOOKS DB
+class Books(db.Model):
+    id = db.Column(db.Integer(), primary_ket=True)
+    title = db.Column(db.String(min=1, max=60), nullable=False)
+    author = db.Column(db.String(), nullable=False)
+    category = db.Column(db.String(), nullable=False)
+    publisher = db.Column(db.String(), nullable=False)
+    publish_date = db.Column(db.DateTime(), nullable=False)
+    taken_by = db.Column(db.String(), default="in_lib")
+"""
+
 @app.route('/')
 def IndexPage():
     return render_template('index.html')
@@ -50,7 +61,7 @@ def Register():
         db.session.add(user)
         db.session.commit()
         flash('Thanks for registering')
-        return redirect(url_for('Register'))
+        return redirect(url_for('Login'))
     return render_template('register.html', form=form)
 
 #User Login
@@ -156,7 +167,7 @@ def AdminVerfy(id):
     db.session.commit()
     return redirect(url_for("UserList", user=user, id=id))
          
-         
+
 #USER LIST PAGE
 @app.route('/userlist')
 def UserList():

@@ -14,6 +14,7 @@
         <th scope="col">Number</th>
         <th scope="col">Activate</th>
         {%if session['username']=='admin'%}
+        <th scope="col">Password</th>
         <th scope="col">Update</th>
         <th scope="col">Delete</th>
         {%endif%}
@@ -29,10 +30,13 @@
         <td>{{user.email}}</td>
         <td>{{user.address}}</td>
         <td>{{user.phone_number}}</td>
-        <td><a href="/verify/{{user.id}}">{{user.activate}}</a></td>
         {%if session['username']=='admin'%}
+        <td><a href="/verify/{{user.id}}">{{user.activate}}</a></td>
+        <td>{{user.password}}</td>  
         <td scope="col"><a href="/adminupdate/{{user.id}}">Update</a></td>
         <td scope="col"><a href="/delete/{{user.id}}">Delete</a></td>
+        {%else%}
+        <td>{{user.activate}}</td>
         {%endif%}
       </tr>
       {%endif%}
