@@ -68,6 +68,7 @@ def Login():
 
                 session["logged_in"]=True
                 session["username"]=user.username
+                session["activate"]=user.activate
                 #print(user.activate)
                 return redirect(url_for("IndexPage"))
             else:
@@ -101,8 +102,8 @@ def Logout():
 @app.route('/update', methods=['GET', 'POST'])
 def UserUpdate():
     form = UserRegisterForm(request.form)
-    username = session['username']
-    user = Users.query.filter_by(username = username).first()
+    username=session['username']
+    user = Users.query.filter_by(username=username).first()
     
     if request.method=='GET':
         form.name.data = user.name
@@ -119,18 +120,55 @@ def UserUpdate():
         db.session.commit()
         return redirect(url_for("UserList"))
     
+    return render_template('userupdate.html', form=form, user=user)
 
-    return render_template('userupdate.html', form=form, user = user)
+#ADMIN UPDATE
+@app.route('/adminupdate/<string:id>', methods=['GET','POST'])
+def AdminUpdate(id):
+    form =UserRegisterForm(request.form)
+    user = Users.query.filter_by(id=id).first()
+    if request.method=='GET':
+        
+        form.name.data = user.name
+        form.address.data = user.address
+        form.email.data  = user.email
+        form.phone_number.data = user.phone_number
+        form.password.data = user.password
+    else: 
+        user.name = form.name.data
+        user.address = form.address.data
+        user.phone_number = form.phone_number.data
+        user.email=form.email.data
+        user.password=form.password.data
+        db.session.commit()
+        return redirect(url_for("UserList"))
 
+    return render_template('userupdate.html', form=form, user=user, id=id)
 
-
+#ADMIN VERIFY
+@app.route('/verify/<string:id>', methods=['GET','POST'])
+def AdminVerfy(id):
+    user = Users.query.filter_by(id=id).first()
+    if user.activate ==False:
+        user.activate=True
+    else:
+        user.activate=False
+    db.session.commit()
+    return redirect(url_for("UserList", user=user, id=id))
+         
+         
 #USER LIST PAGE
 @app.route('/userlist')
-
 def UserList():
     all_users = Users.query.all()
     return render_template('userlist.html', all_users=all_users)
 
+@app.route('/delete/<string:id>')
+def UserDelete(id):
+    user=Users.query.filter_by(id=id).first()
+    db.session.delete(user)
+    db.session.commit()
+    return redirect(url_for("UserList"))
 
 if __name__ == "__main__":
     db.create_all()
