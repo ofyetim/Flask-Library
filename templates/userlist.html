@@ -1,0 +1,33 @@
+{%extends './components/navbar.html'%}
+
+{%block content%}
+{% from "formhelpers.html" import render_field %}
+
+<table class="table table-dark">
+    <thead>
+      <tr>
+        <th scope="col">Id</th>
+        <th scope="col">Username</th>
+        <th scope="col">Name</th>
+        <th scope="col">Email</th>
+        <th scope="col">Address</th>
+        <th scope="col">Number</th>
+        <th scope="col">Activate</th>
+      </tr>
+    </thead>
+    <tbody>
+        {%for user in all_users %}
+      <tr>
+        <td>{{user.id}}</td>
+        <td>{{user.username}}</td>
+        <td>{{user.name}}</td>
+        <td>{{user.email}}</td>
+        <td>{{user.address}}</td>
+        <td>{{user.phone_number}}</td>
+        <td>{{user.activate}}</td>
+      </tr>
+      {%endfor%}
+    </tbody>
+  </table>
+
+{%endblock%}
