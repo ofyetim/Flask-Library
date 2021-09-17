@@ -1,17 +1,19 @@
 from operator import methodcaller
 from flask import Flask
 from flask import *
-import flask
+from flask.sessions import NullSession
+
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import query
+from sqlalchemy.orm import backref, query
 from wtforms import *
 from wtforms.validators import *
 from wtforms.validators import DataRequired
 from flask import flash
 from functools import wraps
+from datetime import datetime
 
 app=Flask(__name__, template_folder="templates")
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/OFY/Desktop/Flask-Library/tmp/test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/OFY/Desktop/Flask-Library/tmp/test2.db'
 app.secret_key = 'super secret key'
 db = SQLAlchemy(app)
 
@@ -25,6 +27,16 @@ class UserRegisterForm(Form):
     password = PasswordField("Password", validators=[validators.length(min=5, max=16),validators.EqualTo('confirm', message='Passwords must match')])
     confirm = PasswordField("Repeat Password")
 
+book_categories = {'Architecture', 'Autobiography', 'Biography', 'Business/Economics', 'Diary', 'Cookbook', 'Drama', 'Fantasy', 'Science'}
+book_publisher = {'Akashic Books', 'Jo Fletcher Books','Page Street Publishing', 'Berkley' ,'Blind Eye Books','Canelo'}
+class BookForm(Form):
+    name = StringField("Book's name: ", validators=[DataRequired(), validators.length(min=1, max=70)])
+    author = StringField("Author: ",validators=[DataRequired(), validators.length(min=5, max=50)])
+    category = SelectField("Category: ", choices=[(category, category) for category in book_categories])
+    publisher= SelectField("Publisher: ", choices=[(publisher, publisher) for publisher in book_publisher])
+
+
+
 #USERS DB
 class  Users(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -35,17 +47,18 @@ class  Users(db.Model):
     address = db.Column(db.String(), nullable=False)
     phone_number = db.Column(db.String(), nullable=False)
     activate = db.Column(db.Boolean(), nullable=False)
+   
 
-"""#BOOKS DB
+#BOOKS DB
 class Books(db.Model):
-    id = db.Column(db.Integer(), primary_ket=True)
-    title = db.Column(db.String(min=1, max=60), nullable=False)
+    id = db.Column(db.Integer(), primary_key=True)
+    title = db.Column(db.String(60), nullable=False)
     author = db.Column(db.String(), nullable=False)
     category = db.Column(db.String(), nullable=False)
     publisher = db.Column(db.String(), nullable=False)
-    publish_date = db.Column(db.DateTime(), nullable=False)
-    taken_by = db.Column(db.String(), default="in_lib")
-"""
+    upload_date = db.Column(db.DateTime(), nullable=False)
+    taken = db.Column(db.Boolean(), nullable=False)
+    
 
 @app.route('/')
 def IndexPage():
@@ -57,7 +70,7 @@ def IndexPage():
 def Register():
     form = UserRegisterForm(request.form)
     if request.method == 'POST' and form.validate():
-        user = Users(username=form.username.data, name=form.name.data,email= form.email.data,password= form.password.data, address=form.address.data, phone_number= form.phone_number.data, activate=False)
+        user = Users(username=form.username.data, name=form.name.data, email=form.email.data, password=form.password.data, address=form.address.data, phone_number= form.phone_number.data, activate=False)
         db.session.add(user)
         db.session.commit()
         flash('Thanks for registering')
@@ -181,6 +194,35 @@ def UserDelete(id):
     db.session.commit()
     return redirect(url_for("UserList"))
 
+#####################################################
+#BOOKS
+
+@app.route('/addbook', methods=['GET','POST'])
+def NewBook():
+    form = BookForm(request.form)
+    date = datetime.now()
+    if request.method == 'POST' and form.validate():
+        book = Books(title=form.name.data, author=form.author.data, category= form.category.data,publisher= form.publisher.data, upload_date=date, taken=False)
+        db.session.add(book)
+        db.session.commit()
+        return redirect(url_for('BookList'))
+
+    return render_template('addbook.html', form=form)
+
+@app.route('/booklist')
+def BookList():
+    all_books = Books.query.all()
+    
+    return render_template('booklist.html', all_books=all_books)
+
+
 if __name__ == "__main__":
     db.create_all()
     app.run(debug=True)
+
+
+
+
+
+#taken_by INTEGER, 
+#FOREIGN KEY(taken_by) REFERENCES users (id)

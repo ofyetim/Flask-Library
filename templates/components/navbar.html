@@ -18,10 +18,12 @@
      <a class="navbar-brand" href="/">Flask-Library</a>
     </div>
     <ul class="nav navbar-nav">
-       {%if session["logged_in"]%}
+       
       <li><a href="/userlist"><span class="glyphicon glyphicon-user"></span> Users</a></li>
       <li><a href="/update"><span class="glyphicon glyphicon-user"></span> User Update</a></li>
-      {%endif%}
+      <li><a href="/addbook"><span class="glyphicon glyphicon-user"></span> New Book</a></li>
+      <li><a href="/booklist"><span class="glyphicon glyphicon-user"></span>Book List</a></li>
+      
     </ul>
     <ul class="nav navbar-nav navbar-right">
       {%if session["logged_in"]==true%}

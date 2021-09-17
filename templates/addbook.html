@@ -1,0 +1,17 @@
+{%extends './components/navbar.html'%}
+
+{%block content%}
+{% from "formhelpers.html" import render_field %}
+<hr>
+
+<form method=post>
+  <dl>
+    {{ render_field(form.name) }}
+    {{ render_field(form.author) }}
+    {{ render_field(form.category) }}
+    {{ render_field(form.publisher) }}
+  </dl>
+  <p><input type=submit value="Add Book">
+</form>
+
+{%endblock%}
