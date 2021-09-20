@@ -26,12 +26,21 @@
         <td>{{book.category}}</td>
         <td>{{book.publisher}}</td>
         <td>{{book.upload_date}}</td>
-        {%if session['logged_in']%}
-        {%if book.taken==False%}
+        {%if session['logged_in'] and session['activate']%}
+        {%if book.owner==none %}
         <td><a href="/getbook/{{book.id}}">Get</a></td>
-        {%else%}
+        {%elif book.owner_id == session["user_id"]%}
         <td><a href="/dropbook/{{book.id}}">Drop</a></td>
+        {%else%}
+        <td>taken from id: {{book.owner_id}}</td>
         {%endif%}
+        {%elif not session['activate']%}
+        <td>Please wait for activation</td>
+        {%else%}
+        <td>login for Get/Drop a book</td>
+        {%endif%}
+        {%if session['username']=='admin'%}
+        <td><a style="color:crimson;" href="/deletebook/{{book.id}}">DeleteBook</a></td>
         {%endif%}
       </tr>
       {%endfor%}

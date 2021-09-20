@@ -17,6 +17,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/OFY/Desktop/Flask-Libr
 app.secret_key = 'super secret key'
 db = SQLAlchemy(app)
 
+book_categories = {'ARCHITECTURE', 'AUTOBIOGRAPHY', 'BIOGRAPHY', 'BUSINESS/ECONOMICS', 'DIARY', 'COOKBOOK', 'DRAMA', 'FANTASY', 'SCIENCE'}
+book_publisher = {'AKASHIC BOOKS', 'JO FLETCHER BOOKS','PAGE STREET PUBLISHING', 'BERKLEY' ,'BLIND EYE BOOKS','CANELO'}
+
 
 class UserRegisterForm(Form):
     username = StringField('Username', validators=[DataRequired(), validators.length(min=4, max=20)])
@@ -27,15 +30,14 @@ class UserRegisterForm(Form):
     password = PasswordField("Password", validators=[validators.length(min=5, max=16),validators.EqualTo('confirm', message='Passwords must match')])
     confirm = PasswordField("Repeat Password")
 
-book_categories = {'ARCHITECTURE', 'AUTOBIOGRAPHY', 'BIOGRAPHY', 'BUSINESS/ECONOMICS', 'DIARY', 'COOKBOOK', 'DRAMA', 'FANTASY', 'SCIENCE'}
-book_publisher = {'AKASHIC BOOKS', 'JO FLETCHER BOOKS','PAGE STREET PUBLISHING', 'BERKLEY' ,'BLIND EYE BOOKS','CANELO'}
 
 class BookForm(Form):
+    
     name = StringField("Book's name: ", validators=[DataRequired(), validators.length(min=1, max=70)])
     author = StringField("Author: ",validators=[DataRequired(), validators.length(min=5, max=50)])
     category = SelectField("Category: ", choices=[(category, category) for category in book_categories])
     publisher= SelectField("Publisher: ", choices=[(publisher, publisher) for publisher in book_publisher])
-
+    new_category = StringField("New Category", validators=[validators.length(min=0, max=20)])
 
 
 #USERS DB
@@ -203,21 +205,27 @@ def UserDelete(id):
 
 @app.route('/addbook', methods=['GET','POST'])
 def NewBook():
-    form = BookForm(request.form)
+    form = BookForm(request.form)  
     date = datetime.now()
+    
     if request.method == 'POST' and form.validate():
-        book = Books(title=form.name.data, author=form.author.data, category= form.category.data,publisher= form.publisher.data, upload_date=date ,taken=False)
+       
+        book = Books(title=form.name.data, author=form.author.data, category=form.category.data, publisher=form.publisher.data, upload_date=date, taken=False)
         db.session.add(book)
         db.session.commit()
         return redirect(url_for('BookList'))
 
     return render_template('addbook.html', form=form)
 
+
+
 @app.route('/booklist')
 def BookList():
     all_books = Books.query.all()
+    user=Users.query.all()
 
-    return render_template('booklist.html', all_books=all_books)
+
+    return render_template('booklist.html', all_books=all_books, user=user)
 
 @app.route('/getbook/<string:id>', methods=['GET','POST'])
 def GetBook(id):
@@ -232,6 +240,7 @@ def GetBook(id):
     db.session.commit()
     return redirect(url_for("BookList", user=user, id=id))
 
+
 @app.route('/dropbook/<string:id>', methods=['GET','POST'])
 def DropBook(id):
     user=Users.query.filter_by(id=session['user_id']).first()
@@ -244,6 +253,16 @@ def DropBook(id):
     return redirect(url_for("BookList", user=user, id=id))
 
 
+@app.route('/deletebook/<string:id>')
+def DeleteBook(id):
+    book=Books.query.filter_by(id=id).first()
+    db.session.delete(book)
+    db.session.commit()
+    return redirect(url_for("BookList"))
+
+admin = Users.query.filter_by(username='admin').first()
+admin.activate = True
+db.session.commit()
 
 if __name__ == "__main__":
     db.create_all()
