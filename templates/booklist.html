@@ -12,7 +12,9 @@
         <th scope="col">Category</th>
         <th scope="col">Publisher</th>
         <th scope="col">Upload Date</th>
+        {%if session['logged_in']%}
         <th scope="col">Taken</th>
+        {%endif%}
       </tr>
     </thead>
     <tbody>
@@ -24,7 +26,13 @@
         <td>{{book.category}}</td>
         <td>{{book.publisher}}</td>
         <td>{{book.upload_date}}</td>
-        <td>{{book.taken}}</td>
+        {%if session['logged_in']%}
+        {%if book.taken==False%}
+        <td><a href="/getbook/{{book.id}}">Get</a></td>
+        {%else%}
+        <td><a href="/dropbook/{{book.id}}">Drop</a></td>
+        {%endif%}
+        {%endif%}
       </tr>
       {%endfor%}
     </tbody>

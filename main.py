@@ -27,8 +27,9 @@ class UserRegisterForm(Form):
     password = PasswordField("Password", validators=[validators.length(min=5, max=16),validators.EqualTo('confirm', message='Passwords must match')])
     confirm = PasswordField("Repeat Password")
 
-book_categories = {'Architecture', 'Autobiography', 'Biography', 'Business/Economics', 'Diary', 'Cookbook', 'Drama', 'Fantasy', 'Science'}
-book_publisher = {'Akashic Books', 'Jo Fletcher Books','Page Street Publishing', 'Berkley' ,'Blind Eye Books','Canelo'}
+book_categories = {'ARCHITECTURE', 'AUTOBIOGRAPHY', 'BIOGRAPHY', 'BUSINESS/ECONOMICS', 'DIARY', 'COOKBOOK', 'DRAMA', 'FANTASY', 'SCIENCE'}
+book_publisher = {'AKASHIC BOOKS', 'JO FLETCHER BOOKS','PAGE STREET PUBLISHING', 'BERKLEY' ,'BLIND EYE BOOKS','CANELO'}
+
 class BookForm(Form):
     name = StringField("Book's name: ", validators=[DataRequired(), validators.length(min=1, max=70)])
     author = StringField("Author: ",validators=[DataRequired(), validators.length(min=5, max=50)])
@@ -47,6 +48,7 @@ class  Users(db.Model):
     address = db.Column(db.String(), nullable=False)
     phone_number = db.Column(db.String(), nullable=False)
     activate = db.Column(db.Boolean(), nullable=False)
+    book=db.relationship('Books', backref='owner', lazy=True)
    
 
 #BOOKS DB
@@ -58,6 +60,7 @@ class Books(db.Model):
     publisher = db.Column(db.String(), nullable=False)
     upload_date = db.Column(db.DateTime(), nullable=False)
     taken = db.Column(db.Boolean(), nullable=False)
+    owner_id=db.Column(db.Integer, db.ForeignKey('users.id'))
     
 
 @app.route('/')
@@ -93,6 +96,7 @@ def Login():
                 session["logged_in"]=True
                 session["username"]=user.username
                 session["activate"]=user.activate
+                session["user_id"]=user.id
                 #print(user.activate)
                 return redirect(url_for("IndexPage"))
             else:
@@ -202,7 +206,7 @@ def NewBook():
     form = BookForm(request.form)
     date = datetime.now()
     if request.method == 'POST' and form.validate():
-        book = Books(title=form.name.data, author=form.author.data, category= form.category.data,publisher= form.publisher.data, upload_date=date, taken=False)
+        book = Books(title=form.name.data, author=form.author.data, category= form.category.data,publisher= form.publisher.data, upload_date=date ,taken=False)
         db.session.add(book)
         db.session.commit()
         return redirect(url_for('BookList'))
@@ -212,8 +216,33 @@ def NewBook():
 @app.route('/booklist')
 def BookList():
     all_books = Books.query.all()
-    
+
     return render_template('booklist.html', all_books=all_books)
+
+@app.route('/getbook/<string:id>', methods=['GET','POST'])
+def GetBook(id):
+    user = Users.query.filter_by(id = session['user_id']).first()
+    book = Books.query.filter_by(id=id).first()
+    book.owner = user
+
+    if book.taken==False:
+        book.taken=True
+    else:
+        book.taken=False
+    db.session.commit()
+    return redirect(url_for("BookList", user=user, id=id))
+
+@app.route('/dropbook/<string:id>', methods=['GET','POST'])
+def DropBook(id):
+    user=Users.query.filter_by(id=session['user_id']).first()
+    book = Books.query.filter_by(id=id).first()
+    book.owner = user
+    if book.taken == True:
+        book.taken=False
+        book.owner = None
+    db.session.commit()
+    return redirect(url_for("BookList", user=user, id=id))
+
 
 
 if __name__ == "__main__":
@@ -221,8 +250,3 @@ if __name__ == "__main__":
     app.run(debug=True)
 
 
-
-
-
-#taken_by INTEGER, 
-#FOREIGN KEY(taken_by) REFERENCES users (id)
