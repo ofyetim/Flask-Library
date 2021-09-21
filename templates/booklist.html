@@ -23,19 +23,19 @@
         <td>{{book.id}}</td>
         <td>{{book.title}}</td>
         <td>{{book.author}}</td>
-        <td>{{book.category}}</td>
+        <td>{{book.category_name}}</td>
         <td>{{book.publisher}}</td>
         <td>{{book.upload_date}}</td>
         {%if session['logged_in'] and session['activate']%}
         {%if book.owner==none %}
         <td><a href="/getbook/{{book.id}}">Get</a></td>
-        {%elif book.owner_id == session["user_id"]%}
+        {%elif book.owner.id == session["user_id"]%}
         <td><a href="/dropbook/{{book.id}}">Drop</a></td>
         {%else%}
-        <td>taken from id: {{book.owner_id}}</td>
+        <td>taken from: {{book.owner.username}}</td>
         {%endif%}
-        {%elif not session['activate']%}
-        <td>Please wait for activation</td>
+        {%elif session['logged_in'] and not session['activate'] %}
+        <td>wait activation for avaliable books</td>
         {%else%}
         <td>login for Get/Drop a book</td>
         {%endif%}

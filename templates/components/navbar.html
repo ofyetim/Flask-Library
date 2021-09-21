@@ -21,11 +21,12 @@
       {%if session["logged_in"]==true%}
       {%if session['username']=='admin'%}
       <li><a href="/userlist"><span class="glyphicon glyphicon-user"></span> Users</a></li>
-      <li><a href="/addbook"><span class="glyphicon glyphicon-user"></span> New Book</a></li>
+      <li><a href="/addbook"><span class="glyphicon glyphicon-book"></span> New Book</a></li>
+      <li><a href="/newcategory"><span class="glyphicon glyphicon-plus"></span>Add New Category</a></li>
       {%endif%}
-      <li><a href="/update"><span class="glyphicon glyphicon-user"></span> User Update</a></li>
+      <li><a href="/update"><span class="glyphicon glyphicon-pencil"></span> User Update</a></li>
       {%endif%}
-      <li><a href="/booklist"><span class="glyphicon glyphicon-user"></span>Book List</a></li>
+      <li><a href="/booklist"><span class="glyphicon glyphicon-th-list"></span>Book List</a></li>
       
     </ul>
     <ul class="nav navbar-nav navbar-right">

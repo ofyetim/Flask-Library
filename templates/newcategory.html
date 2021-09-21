@@ -1,0 +1,15 @@
+{%extends './components/navbar.html'%}
+
+{%block content%}
+{% from "formhelpers.html" import render_field %}
+<hr>
+
+<form method=post>
+  <dl>
+      <h4>Add New Category</h4>
+    {{ render_field(form.name) }}
+  </dl>
+  <p><input type=submit value="Add New Category">
+</form>
+
+{%endblock%}

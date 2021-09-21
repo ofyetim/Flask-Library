@@ -1,10 +1,11 @@
+from html.entities import name2codepoint
 from operator import methodcaller
 from flask import Flask
 from flask import *
 from flask.sessions import NullSession
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import backref, query
+from sqlalchemy.orm import backref, lazyload, query
 from wtforms import *
 from wtforms.validators import *
 from wtforms.validators import DataRequired
@@ -13,31 +14,25 @@ from functools import wraps
 from datetime import datetime
 
 app=Flask(__name__, template_folder="templates")
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/OFY/Desktop/Flask-Library/tmp/test2.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/OFY/Desktop/Flask-Library/tmp/library.db'
 app.secret_key = 'super secret key'
 db = SQLAlchemy(app)
 
-book_categories = {'ARCHITECTURE', 'AUTOBIOGRAPHY', 'BIOGRAPHY', 'BUSINESS/ECONOMICS', 'DIARY', 'COOKBOOK', 'DRAMA', 'FANTASY', 'SCIENCE'}
+
+#book_categories = {'ARCHITECTURE', 'AUTOBIOGRAPHY', 'BIOGRAPHY', 'BUSINESS/ECONOMICS', 'DIARY', 'COOKBOOK', 'DRAMA', 'FANTASY', 'SCIENCE'}
 book_publisher = {'AKASHIC BOOKS', 'JO FLETCHER BOOKS','PAGE STREET PUBLISHING', 'BERKLEY' ,'BLIND EYE BOOKS','CANELO'}
 
 
-class UserRegisterForm(Form):
-    username = StringField('Username', validators=[DataRequired(), validators.length(min=4, max=20)])
-    name=StringField("Name Surname", validators=[DataRequired(), validators.length(min=5, max=20)])
-    email = StringField("e-Mail", validators=[DataRequired(), validators.Email()])
-    address=StringField("Address", validators=[DataRequired()])
-    phone_number=StringField("Phone Number", validators=[DataRequired(), validators.length(10)])
-    password = PasswordField("Password", validators=[validators.length(min=5, max=16),validators.EqualTo('confirm', message='Passwords must match')])
-    confirm = PasswordField("Repeat Password")
-
-
-class BookForm(Form):
-    
-    name = StringField("Book's name: ", validators=[DataRequired(), validators.length(min=1, max=70)])
-    author = StringField("Author: ",validators=[DataRequired(), validators.length(min=5, max=50)])
-    category = SelectField("Category: ", choices=[(category, category) for category in book_categories])
-    publisher= SelectField("Publisher: ", choices=[(publisher, publisher) for publisher in book_publisher])
-    new_category = StringField("New Category", validators=[validators.length(min=0, max=20)])
+#BOOKS DB
+class Books(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    title = db.Column(db.String(60), nullable=False)
+    author = db.Column(db.String(), nullable=False)
+    publisher = db.Column(db.String(), nullable=False)
+    upload_date = db.Column(db.DateTime(), nullable=False)
+    taken = db.Column(db.Boolean(), nullable=False)
+    owner_id=db.Column(db.String(), db.ForeignKey('users.username'))
+    category_name= db.Column(db.String(), db.ForeignKey('categories.name'))
 
 
 #USERS DB
@@ -51,19 +46,43 @@ class  Users(db.Model):
     phone_number = db.Column(db.String(), nullable=False)
     activate = db.Column(db.Boolean(), nullable=False)
     book=db.relationship('Books', backref='owner', lazy=True)
-   
 
-#BOOKS DB
-class Books(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
-    title = db.Column(db.String(60), nullable=False)
-    author = db.Column(db.String(), nullable=False)
-    category = db.Column(db.String(), nullable=False)
-    publisher = db.Column(db.String(), nullable=False)
-    upload_date = db.Column(db.DateTime(), nullable=False)
-    taken = db.Column(db.Boolean(), nullable=False)
-    owner_id=db.Column(db.Integer, db.ForeignKey('users.id'))
-    
+#Category DB
+class Categories(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name=db.Column(db.String(), nullable=False)
+    category_name=db.relationship('Books', backref='category', lazy=True)
+
+
+
+class UserRegisterForm(Form):
+    username = StringField('Username', validators=[DataRequired(), validators.length(min=4, max=20)])
+    name=StringField("Name Surname", validators=[DataRequired(), validators.length(min=5, max=20)])
+    email = StringField("e-Mail", validators=[DataRequired(), validators.Email()])
+    address=StringField("Address", validators=[DataRequired()])
+    phone_number=StringField("Phone Number", validators=[DataRequired(), validators.length(10)])
+    password = PasswordField("Password", validators=[validators.length(min=5, max=16),validators.EqualTo('confirm', message='Passwords must match')])
+    confirm = PasswordField("Repeat Password")
+
+
+def CategoryList():
+    all_categories = Categories.query.all()
+    return all_categories
+
+all_categories = CategoryList()
+namelist=[]
+for category in all_categories:
+    namelist.append(category.name)
+
+
+class BookForm(Form):
+    name = StringField("Book's name: ", validators=[DataRequired(), validators.length(min=1, max=70)])
+    author = StringField("Author: ",validators=[DataRequired(), validators.length(min=5, max=50)])
+    category = SelectField("Category: ", choices=[(category, category) for category in namelist])
+    publisher= SelectField("Publisher: ", choices=[(publisher, publisher) for publisher in book_publisher])
+
+class CategoryForm(Form):
+    name = StringField("New Category: ", validators=[DataRequired(), validators.length(min=1, max=25)])
 
 @app.route('/')
 def IndexPage():
@@ -205,27 +224,25 @@ def UserDelete(id):
 
 @app.route('/addbook', methods=['GET','POST'])
 def NewBook():
+    
     form = BookForm(request.form)  
     date = datetime.now()
-    
-    if request.method == 'POST' and form.validate():
-       
-        book = Books(title=form.name.data, author=form.author.data, category=form.category.data, publisher=form.publisher.data, upload_date=date, taken=False)
+    all_categories = CategoryList()
+    if request.method == 'POST' and form.validate():  
+        book = Books(title=form.name.data, author=form.author.data, publisher=form.publisher.data, category_name=form.category.data, upload_date=date, taken=False)
         db.session.add(book)
         db.session.commit()
         return redirect(url_for('BookList'))
-
-    return render_template('addbook.html', form=form)
-
+        
+    return render_template('addbook.html', form=form, all_categories=all_categories)
 
 
 @app.route('/booklist')
 def BookList():
     all_books = Books.query.all()
     user=Users.query.all()
-
-
     return render_template('booklist.html', all_books=all_books, user=user)
+
 
 @app.route('/getbook/<string:id>', methods=['GET','POST'])
 def GetBook(id):
@@ -260,12 +277,19 @@ def DeleteBook(id):
     db.session.commit()
     return redirect(url_for("BookList"))
 
-admin = Users.query.filter_by(username='admin').first()
-admin.activate = True
-db.session.commit()
+@app.route('/newcategory', methods=['GET','POST'])
+def NewCategory():
+    form = CategoryForm(request.form)
+
+    if request.method =='POST' and form.validate():
+        category=Categories(name = form.name.data)
+        db.session.add(category)
+        db.session.commit()
+        namelist.append(category.name)
+        return redirect(url_for("NewBook"))
+    return render_template('newcategory.html', form=form)
+
 
 if __name__ == "__main__":
     db.create_all()
     app.run(debug=True)
-
-
