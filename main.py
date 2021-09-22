@@ -283,9 +283,9 @@ def NewCategory():
 
     if request.method =='POST' and form.validate():
         category=Categories(name = form.name.data)
+        namelist.append(category.name)
         db.session.add(category)
         db.session.commit()
-        namelist.append(category.name)
         return redirect(url_for("NewBook"))
     return render_template('newcategory.html', form=form)
 
