@@ -1,9 +1,9 @@
 {%extends './components/navbar.html'%}
-
 {%block content%}
-{% from "formhelpers.html" import render_field %}
-<hr>
 
+{% from "formhelpers.html" import render_field %}
+
+<hr>
 <form method=post>
   <dl>
     {{ render_field(form.name) }}

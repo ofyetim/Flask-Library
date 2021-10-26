@@ -53,8 +53,7 @@ class Categories(db.Model):
     name=db.Column(db.String(), nullable=False)
     category_name=db.relationship('Books', backref='category', lazy=True)
 
-
-
+#USER FORM
 class UserRegisterForm(Form):
     username = StringField('Username', validators=[DataRequired(), validators.length(min=4, max=20)])
     name=StringField("Name Surname", validators=[DataRequired(), validators.length(min=5, max=20)])
@@ -69,8 +68,9 @@ def CategoryList():
     all_categories = Categories.query.all()
     return all_categories
 
-all_categories = CategoryList()
 namelist=[]
+all_categories = CategoryList()
+
 for category in all_categories:
     namelist.append(category.name)
 
@@ -78,7 +78,8 @@ for category in all_categories:
 class BookForm(Form):
     name = StringField("Book's name: ", validators=[DataRequired(), validators.length(min=1, max=70)])
     author = StringField("Author: ",validators=[DataRequired(), validators.length(min=5, max=50)])
-    category = SelectField("Category: ", choices=[(category, category) for category in namelist])
+    print(namelist)
+    category = SelectField("Category: ", choices=[(category, category) for category in namelist])# bu da formda kategorilerin olduğu selectfield
     publisher= SelectField("Publisher: ", choices=[(publisher, publisher) for publisher in book_publisher])
 
 class CategoryForm(Form):
@@ -225,16 +226,23 @@ def UserDelete(id):
 @app.route('/addbook', methods=['GET','POST'])
 def NewBook():
     
+    
+    all_categories = CategoryList()
+    namelist=[]
+    for category in all_categories:
+        namelist.append(category.name)
+
     form = BookForm(request.form)  
     date = datetime.now()
-    all_categories = CategoryList()
+    
     if request.method == 'POST' and form.validate():  
         book = Books(title=form.name.data, author=form.author.data, publisher=form.publisher.data, category_name=form.category.data, upload_date=date, taken=False)
+        
         db.session.add(book)
         db.session.commit()
         return redirect(url_for('BookList'))
-        
-    return render_template('addbook.html', form=form, all_categories=all_categories)
+      
+    return render_template('addbook.html', form=form, namelist = namelist )
 
 
 @app.route('/booklist')
@@ -277,6 +285,7 @@ def DeleteBook(id):
     db.session.commit()
     return redirect(url_for("BookList"))
 
+#kategori ekleme bu
 @app.route('/newcategory', methods=['GET','POST'])
 def NewCategory():
     form = CategoryForm(request.form)
@@ -287,7 +296,7 @@ def NewCategory():
         db.session.add(category)
         db.session.commit()
         return redirect(url_for("NewBook"))
-    return render_template('newcategory.html', form=form)
+    return render_template('newcategory.html', form=form, namelist = namelist)
 
 
 if __name__ == "__main__":
